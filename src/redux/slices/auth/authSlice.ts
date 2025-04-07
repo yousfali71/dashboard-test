@@ -1,83 +1,131 @@
-// lib/features/auth/authSlice.ts
-import { AuthUser } from "@/lib/types";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { User } from "firebase/auth";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { toast } from "react-toastify";
 
-interface AuthState {
-  user: AuthUser | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-}
-
-// Load initial state from localStorage
-const loadInitialState = (): AuthState => {
-  if (typeof window === "undefined") {
-    return {
-      user: null,
-      isAuthenticated: false,
-      loading: false,
-      error: null,
-    };
-  }
-
-  const savedAuth = localStorage.getItem("firebaseAuth");
-  return savedAuth
-    ? JSON.parse(savedAuth)
-    : {
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      };
+const saveUserToLocalStorage = (user: any) => {
+  localStorage.setItem("authUser", JSON.stringify(user));
 };
 
-const initialState: AuthState = loadInitialState();
+const removeUserFromLocalStorage = () => {
+  localStorage.removeItem("authUser");
+};
+
+const getInitialUser = () => {
+  if (typeof window !== "undefined") {
+    const user = localStorage.getItem("authUser");
+    return user ? JSON.parse(user) : null;
+  }
+  return null;
+};
+
+export const loginUser = createAsyncThunk(
+  "auth/login",
+  async (
+    { email, password }: { email: string; password: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      };
+      saveUserToLocalStorage(user);
+      toast.success("Login successful!");
+      return user;
+    } catch (error: any) {
+      toast.error("Login failed: " + error.message);
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await signOut(auth);
+      removeUserFromLocalStorage();
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  "auth/register",
+  async (
+    {
+      email,
+      password,
+      username,
+    }: { email: string; password: string; username?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        username: username || "",
+      };
+      localStorage.setItem("authUser", JSON.stringify(user));
+      return user;
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: "auth",
-  initialState,
-  reducers: {
-    loginStart: (state) => {
-      state.loading = true;
-      state.error = null;
-    },
-    loginSuccess: (state, action: PayloadAction<AuthUser>) => {
-      state.user = action.payload;
-      state.isAuthenticated = true;
-      state.loading = false;
-      state.error = null;
-    },
-    loginFailure: (state, action: PayloadAction<string>) => {
-      state.loading = false;
-      state.error = action.payload;
-    },
-    logout: (state) => {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.loading = false;
-      state.error = null;
-    },
+  initialState: {
+    user: getInitialUser(),
+    loading: false,
+    error: null as string | null,
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+      });
+    builder
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
-
-export const { loginStart, loginSuccess, loginFailure, logout } =
-  authSlice.actions;
-
-// Save to localStorage on state changes
-export const saveAuthState = (state: AuthState) => {
-  if (typeof window !== "undefined") {
-    console.log(state.user?.email);
-    localStorage.setItem(
-      "firebaseAuth",
-      JSON.stringify({
-        user: state.user,
-        isAuthenticated: state.isAuthenticated,
-        loading: state.loading,
-        error: state.error,
-      })
-    );
-  }
-};
 
 export default authSlice.reducer;

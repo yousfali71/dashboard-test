@@ -1,11 +1,22 @@
 "use client";
-
-import { useAuthUser } from "@/redux/hooks";
-
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
-  const { user } = useAuthUser();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for user in localStorage when component mounts
+    const storedUser = localStorage.getItem("authUser");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setUserEmail(user.email || null);
+      } catch (error) {
+        console.error("Failed to parse user data:", error);
+      }
+    }
+  }, []);
 
   return (
     <div className="flex items-center justify-between p-4">
@@ -18,6 +29,7 @@ const Navbar = () => {
           className="w-[200px] p-2 bg-transparent outline-none"
         />
       </div>
+
       {/* ICONS AND USER */}
       <div className="flex items-center gap-6 justify-end w-full">
         <div className="bg-white rounded-full w-7 h-7 flex items-center justify-center cursor-pointer">
@@ -30,8 +42,12 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex flex-col">
-          <span className="text-xs leading-3 font-medium">{"John Doe"}</span>
-          <span className="text-[10px] text-gray-500 text-right">Admin</span>
+          <span className="text-xs leading-3 font-medium">
+            {userEmail || "Guest User"}
+          </span>
+          <span className="text-[10px] text-gray-500 text-right">
+            {userEmail ? "Admin" : "Guest"}
+          </span>
         </div>
         <Image
           src="/avatar.png"

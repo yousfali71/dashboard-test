@@ -1,16 +1,18 @@
-
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer, { saveAuthState } from "./slices/auth/authSlice";
+import authReducer from "@/redux/slices/auth/authSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
   },
-});
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActionPaths: ["payload", "meta.arg", "meta.baseQueryMeta"],
 
-store.subscribe(() => {
-  const { auth } = store.getState();
-  saveAuthState(auth);
+        ignoredPaths: ["auth.user"],
+      },
+    }),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
