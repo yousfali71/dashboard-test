@@ -1,6 +1,6 @@
 # Admin Dashboard Assessment
 
-![Dashboard Preview](public/dashboard.png)
+![Dashboard Preview](public/screenshot.PNG)
 
 A responsive admin dashboard built with Next.js, React, and Firebase for a job application assessment. This project demonstrates modern web development practices including authentication, data visualization, and responsive design.
 
