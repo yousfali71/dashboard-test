@@ -1,6 +1,12 @@
+"use client";
+
+import { useAuthUser } from "@/redux/hooks";
+
 import Image from "next/image";
 
 const Navbar = () => {
+  const { user } = useAuthUser();
+
   return (
     <div className="flex items-center justify-between p-4">
       {/* SEARCH BAR */}
@@ -24,7 +30,7 @@ const Navbar = () => {
           </div>
         </div>
         <div className="flex flex-col">
-          <span className="text-xs leading-3 font-medium">John Doe</span>
+          <span className="text-xs leading-3 font-medium">{"John Doe"}</span>
           <span className="text-[10px] text-gray-500 text-right">Admin</span>
         </div>
         <Image

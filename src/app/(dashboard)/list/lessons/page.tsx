@@ -1,4 +1,3 @@
-import FormModal from "@/components/FormModal";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -41,16 +40,6 @@ const LessonListPage = () => {
       <td className="flex items-center gap-4 p-4">{item.subject}</td>
       <td>{item.class}</td>
       <td className="hidden md:table-cell">{item.teacher}</td>
-      <td>
-        <div className="flex items-center gap-2">
-          {role === "admin" && (
-            <>
-              <FormModal table="lesson" type="update" data={item} />
-              <FormModal table="lesson" type="delete" id={item.id} />
-            </>
-          )}
-        </div>
-      </td>
     </tr>
   );
 
@@ -68,7 +57,6 @@ const LessonListPage = () => {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
             </button>
-            {role === "admin" && <FormModal table="lesson" type="create" />}
           </div>
         </div>
       </div>
